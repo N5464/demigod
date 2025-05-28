@@ -1,5 +1,5 @@
 import React from 'react';
-import { Command, Brain, Repeat, UserPlus, MessageSquare } from 'lucide-react';
+import { Command } from 'lucide-react';
 import PersonalizedGenerator from '../components/ops/PersonalizedGenerator';
 import DemiNotes from '../components/ops/DemiNotes';
 import FollowUpLauncher from '../components/ops/FollowUpLauncher';
@@ -28,6 +28,6 @@ const DemiOps: React.FC = () => {
       </div>
     </main>
   );
-};
+}
 
 export default DemiOps;

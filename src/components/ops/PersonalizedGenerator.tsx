@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import { MessageSquare, Copy } from 'lucide-react';
-import { useLeads } from '../../context/LeadContext';
-import { generateMessages } from '../../services/webhooks';
-import { copyToClipboard } from '../../utils/clipboard';
 import toast from 'react-hot-toast';
+import { copyToClipboard } from '../../utils/clipboard';
+
+interface GeneratePayload {
+  business_name: string;
+  niche: string;
+  pain_point: string;
+  tone_style: string;
+}
 
 const PersonalizedGenerator: React.FC = () => {
   const [businessName, setBusinessName] = useState('');
   const [niche, setNiche] = useState('');
   const [painPoint, setPainPoint] = useState('');
-  const [channel, setChannel] = useState('Email');
-  const [style, setStyle] = useState('Bold');
+  const [toneStyle, setToneStyle] = useState('Bold');
   const [message, setMessage] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -22,19 +26,36 @@ const PersonalizedGenerator: React.FC = () => {
 
     setIsGenerating(true);
     try {
-      const messages = await generateMessages({
-        business_name: businessName,
-        niche,
-        pain_point: painPoint,
-        channel,
-        style,
+      const response = await fetch('https://hook.eu2.make.com/fjhhucgjg8wyhkr0rru12yy8slpi222a', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          business_name: businessName,
+          niche,
+          pain_point: painPoint,
+          tone_style: toneStyle,
+        } as GeneratePayload),
       });
 
-      setMessage(messages[channel.toLowerCase()]);
+      if (!response.ok) {
+        throw new Error('Failed to generate message');
+      }
+
+      // Get response as plain text instead of trying to parse as JSON
+      const data = await response.text();
+      console.log("Raw webhook response:", data);
+      
+      if (!data) {
+        throw new Error('Empty response from webhook');
+      }
+
+      setMessage(data);
       toast.success('Message generated via Nik4i AI Agent 🎯');
     } catch (error) {
       console.error('Error generating message:', error);
-      toast.error('AI message generation failed – try again.');
+      toast.error('Failed to generate message. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -44,7 +65,7 @@ const PersonalizedGenerator: React.FC = () => {
     <div className="card p-6 space-y-6">
       <div className="flex items-center gap-2">
         <MessageSquare size={20} className="text-primary-500" />
-        <h2 className="text-lg font-semibold">Personalized Message Generator</h2>
+        <h2 className="text-lg font-semibold">🎯 Personalized Message Generator</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -57,7 +78,7 @@ const PersonalizedGenerator: React.FC = () => {
             className="input"
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
-            placeholder="Enter business name"
+            placeholder="e.g. InkSoul Studio"
           />
         </div>
 
@@ -70,7 +91,7 @@ const PersonalizedGenerator: React.FC = () => {
             className="input"
             value={niche}
             onChange={(e) => setNiche(e.target.value)}
-            placeholder="e.g., Dental Clinic"
+            placeholder="e.g. Tattoo Studio"
           />
         </div>
 
@@ -83,37 +104,23 @@ const PersonalizedGenerator: React.FC = () => {
             className="input"
             value={painPoint}
             onChange={(e) => setPainPoint(e.target.value)}
-            placeholder="e.g., low website conversions"
+            placeholder="e.g. low walk-ins, client no-shows"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Channel
+            Tone Style
           </label>
           <select
             className="select"
-            value={channel}
-            onChange={(e) => setChannel(e.target.value)}
+            value={toneStyle}
+            onChange={(e) => setToneStyle(e.target.value)}
           >
-            <option value="Email">Email</option>
-            <option value="WhatsApp">WhatsApp</option>
-            <option value="Instagram DM">Instagram DM</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Message Style
-          </label>
-          <select
-            className="select"
-            value={style}
-            onChange={(e) => setStyle(e.target.value)}
-          >
-            <option value="Casual">Casual</option>
             <option value="Bold">Bold</option>
-            <option value="Premium">Premium</option>
+            <option value="Chill">Chill</option>
+            <option value="Friendly">Friendly</option>
+            <option value="Consultant">Consultant</option>
           </select>
         </div>
       </div>
