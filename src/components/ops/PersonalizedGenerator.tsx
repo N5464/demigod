@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { MessageSquare, Copy } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MessageSquare, Copy, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { copyToClipboard } from '../../utils/clipboard';
+import { useLeads } from '../../context/LeadContext';
+import { sendEmail, logOutreach } from '../../services/webhooks';
 
 interface GeneratePayload {
   business_name: string;
@@ -11,12 +13,23 @@ interface GeneratePayload {
 }
 
 const PersonalizedGenerator: React.FC = () => {
+  const { selectedLead } = useLeads();
   const [businessName, setBusinessName] = useState('');
   const [niche, setNiche] = useState('');
   const [painPoint, setPainPoint] = useState('');
   const [toneStyle, setToneStyle] = useState('Bold');
   const [message, setMessage] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+
+  // Update form when a lead is selected
+  useEffect(() => {
+    if (selectedLead) {
+      setBusinessName(selectedLead.business_name);
+      setNiche(selectedLead.niche);
+    }
+  }, [selectedLead]);
 
   const handleGenerate = async () => {
     if (!businessName || !niche || !painPoint) {
@@ -43,10 +56,7 @@ const PersonalizedGenerator: React.FC = () => {
         throw new Error('Failed to generate message');
       }
 
-      // Get response as plain text instead of trying to parse as JSON
       const data = await response.text();
-      console.log("Raw webhook response:", data);
-      
       if (!data) {
         throw new Error('Empty response from webhook');
       }
@@ -58,6 +68,40 @@ const PersonalizedGenerator: React.FC = () => {
       toast.error('Failed to generate message. Please try again.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!selectedLead?.email || !message || !emailSubject) {
+      toast.error('Please ensure you have a selected lead, subject, and message content');
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      await sendEmail({
+        business_name: selectedLead.business_name,
+        email: selectedLead.email,
+        subject: emailSubject,
+        message: message,
+      });
+      
+      // Log the outreach silently after successful email send
+      logOutreach({
+        business_name: selectedLead.business_name,
+        channel: 'Email',
+        message: message,
+        timestamp: new Date().toISOString(),
+      }).catch(error => {
+        console.error('Error logging outreach:', error);
+      });
+      
+      toast.success('Email sent successfully! 📧');
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast.error('Failed to send email. Please try again.');
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -145,18 +189,54 @@ const PersonalizedGenerator: React.FC = () => {
       </button>
 
       {message && (
-        <div className="relative">
-          <textarea
-            className="message-container w-full resize-none font-mono text-sm min-h-[200px]"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email Subject
+            </label>
+            <input
+              type="text"
+              className="input"
+              value={emailSubject}
+              onChange={(e) => setEmailSubject(e.target.value)}
+              placeholder="Enter email subject"
+            />
+          </div>
+
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Message Content
+            </label>
+            <textarea
+              className="message-container w-full resize-none font-mono text-sm min-h-[200px]"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            <button
+              className="absolute top-8 right-2 p-1.5 bg-white/80 hover:bg-gray-50 rounded-md transition-colors"
+              onClick={() => copyToClipboard(message, 'Message copied!')}
+              title="Copy to clipboard"
+            >
+              <Copy size={16} className="text-gray-600" />
+            </button>
+          </div>
+
           <button
-            className="absolute top-2 right-2 p-1.5 bg-white/80 hover:bg-gray-50 rounded-md transition-colors"
-            onClick={() => copyToClipboard(message, 'Message copied!')}
-            title="Copy to clipboard"
+            className="btn-primary w-full flex items-center justify-center gap-2"
+            onClick={handleSendEmail}
+            disabled={isSending || !selectedLead?.email}
           >
-            <Copy size={16} className="text-gray-600" />
+            {isSending ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Sending...</span>
+              </>
+            ) : (
+              <>
+                <Send size={18} />
+                <span>Send Email</span>
+              </>
+            )}
           </button>
         </div>
       )}

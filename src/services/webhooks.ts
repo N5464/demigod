@@ -54,7 +54,10 @@ export const logOutreach = async (payload: SendMessagePayload): Promise<void> =>
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      ...payload,
+      status: 'Contacted'
+    }),
   });
 
   if (!response.ok) {
@@ -82,7 +85,7 @@ export const sendEmail = async (payload: EmailPayload): Promise<void> => {
     body: JSON.stringify({
       business_name: payload.business_name,
       email: payload.email,
-      subject: `Let's talk automation for ${payload.business_name}`,
+      subject: payload.subject,
       message: payload.message
     }),
   });

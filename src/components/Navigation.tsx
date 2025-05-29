@@ -34,9 +34,6 @@ const Navigation: React.FC = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-4">
-            <div className="hidden md:block text-sm text-gray-600">
-              AI Outreach Generator
-            </div>
             <button
               onClick={() => setIsBuilderMode(!isBuilderMode)}
               className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${
@@ -89,10 +86,6 @@ const Navigation: React.FC = () => {
               <PenTool size={16} />
               <span className="text-sm font-medium">Builder</span>
             </button>
-            
-            <div className="px-3 py-2 text-sm text-gray-600">
-              AI Outreach Generator
-            </div>
           </div>
         </div>
       </nav>

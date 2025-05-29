@@ -6,18 +6,16 @@ import OutreachPanel from './OutreachPanel';
 
 const MessageDisplay: React.FC = () => {
   const { generatedMessages, isGeneratingMessages } = useLeads();
-  const [activeTab, setActiveTab] = useState<'email' | 'whatsapp' | 'instagram'>('email');
+  const [activeTab, setActiveTab] = useState<'whatsapp' | 'instagram'>('whatsapp');
   const [editedMessages, setEditedMessages] = useState<{
-    email: string;
     whatsapp: string;
     instagram: string;
-  }>({ email: '', whatsapp: '', instagram: '' });
+  }>({ whatsapp: '', instagram: '' });
 
   // Update edited messages when new messages are generated
   React.useEffect(() => {
     if (generatedMessages) {
       setEditedMessages({
-        email: generatedMessages.email,
         whatsapp: generatedMessages.whatsapp,
         instagram: generatedMessages.instagram,
       });
@@ -58,12 +56,6 @@ const MessageDisplay: React.FC = () => {
       
       <div className="flex border-b border-gray-200">
         <button
-          className={`tab ${activeTab === 'email' ? 'tab-active' : 'tab-inactive'}`}
-          onClick={() => setActiveTab('email')}
-        >
-          Email Message
-        </button>
-        <button
           className={`tab ${activeTab === 'whatsapp' ? 'tab-active' : 'tab-inactive'}`}
           onClick={() => setActiveTab('whatsapp')}
         >
@@ -78,23 +70,6 @@ const MessageDisplay: React.FC = () => {
       </div>
       
       <div className="p-4">
-        {activeTab === 'email' && (
-          <div className="relative">
-            <textarea
-              className="message-container w-full resize-none font-mono text-sm"
-              value={editedMessages.email}
-              onChange={(e) => setEditedMessages(prev => ({ ...prev, email: e.target.value }))}
-            />
-            <button
-              className="absolute top-2 right-2 p-1.5 bg-white/80 hover:bg-gray-50 rounded-md transition-colors"
-              onClick={() => handleCopy(editedMessages.email, 'Email')}
-              title="Copy to clipboard"
-            >
-              <Copy size={16} className="text-gray-600" />
-            </button>
-          </div>
-        )}
-        
         {activeTab === 'whatsapp' && (
           <div className="relative">
             <textarea
